@@ -1,0 +1,27 @@
+---
+# confgig commun de tout les hosts
+
+- hosts: all
+  vars:
+    ID: 6000
+    DOMAIN: sql.lghs.space
+    NGINX_ROOT: /var/www/sql.lghs.space
+    TECHNO: php
+
+  pre_tasks:
+    - include_vars: secured/password.yml
+
+  roles:
+    - { role: 'user', when: ansible_hostname == 'app' }
+    - { role: 'php', when: ansible_hostname == 'app' }
+    - { role: 'nginx', when: ansible_hostname == 'app' }
+    - { role: 'letsencrypt', when: ansible_hostname == 'moss' }
+
+  tasks:
+    - name: Téléchargement adminer
+      get_url: url=https://www.adminer.org/latest-mysql.php dest=/var/www/sql.lghs.space/index.php mode=0440
+      when: ansible_hostname == 'app'
+
+    - name: test droit adminer
+      file: path=/var/www/sql.lghs.space/index.php owner={{ DOMAIN | replace(".", "-") }} group={{ DOMAIN | replace(".", "-") }}
+      when: ansible_hostname == 'app'

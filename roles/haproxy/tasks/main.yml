@@ -1,0 +1,6 @@
+---
+
+- name: Copie des fichier de haproxy
+  template: src=haproxy.j2 dest=/etc/haproxy/haproxy.cfg owner=root group=root mode="u+rw,g+r,o+r"
+  notify:
+    - restart haproxy

@@ -1,0 +1,24 @@
+---
+# confgig commun de tout les hosts
+
+- hosts: moss.lghs.space
+  vars:
+    WEBSITES:
+    - { domain: 'sql.lghs.space', srv: 'app.moss.lghs.space:80' }
+    - { domain: 'lghs.be', srv: 'app.moss.lghs.space:80' }
+
+    LES:
+    - { domain: 'sql.lghs.space', srv: 'moss.lghs.space' }
+    - { domain: 'lghs.be', srv: 'moss.lghs.space' }
+
+    REDIRECTS:
+    - { redirect: 'lghs.be', domain: 'www.lghs.be' }
+
+    FORCEHTTPS:
+    - lghs.be
+
+  pre_tasks:
+    - include_vars: secured/password.yml
+
+  roles:
+    - haproxy

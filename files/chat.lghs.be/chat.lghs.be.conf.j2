@@ -1,0 +1,9 @@
+[program:chat-lghs-be]
+command=/usr/local/bin/node /var/www/chat.lghs.be/bundle/main.js
+directory=/var/www/chat.lghs.be/bundle
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/chat-lghs-be.err.log
+stdout_logfile=/var/log/chat-lghs-be.out.log
+user=chat-lghs-be
+environment=ROOT_URL="https://chat.lghs.be",MONGO_URL="mongodb://localhost:27017/rocketchat",PORT="3000",ADMIN_PASS="{{ CHAT_ADMIN }}"

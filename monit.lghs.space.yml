@@ -1,0 +1,33 @@
+---
+# confgig commun de tout les hosts
+
+- hosts: all
+  vars:
+    ID: 6002
+    DOMAIN: monit.lghs.space
+    NGINX_ROOT: /var/www/monit.lghs.space
+    TECHNO: nodejs
+
+  pre_tasks:
+    - include_vars: secured/password.yml
+
+  roles:
+    - { role: 'user', when: ansible_hostname == 'monit' }
+    - { role: 'php', when: ansible_hostname == 'monit' }
+    - { role: 'nginx', when: ansible_hostname == 'monit' }
+    #~ - { role: 'letsencrypt', when: ansible_hostname == 'moss' }
+
+  tasks:
+    - name: Téléchargement m/monit
+      git: repo=https://github.com/antoniopuero/open-m-monit.git dest=/var/www/monit.lghs.space clone=yes update=yes force=yes
+      when: ansible_hostname == 'monit'
+
+    - name: test droit lghs.be
+      file: path=/var/www/monit.lghs.space owner={{ DOMAIN | replace(".", "-") }} group={{ DOMAIN | replace(".", "-") }} recurse=yes
+      when: ansible_hostname == 'monit'
+
+    - name: npm install
+      npm: path=/var/www/monit.lghs.space state=latest
+      when: ansible_hostname == 'monit'
+
+

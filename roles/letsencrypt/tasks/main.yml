@@ -1,0 +1,13 @@
+---
+
+- name: Créer repertoire letsencrypt {{ DOMAIN }}
+  file: path=/home/letsencrypt/ssl/{{ DOMAIN }} state=directory owner=letsencrypt group=letsencrypt mode="u+rwX,g+rwX,o+r" recurse=yes
+
+- name: Copie cles letsencrypt {{ DOMAIN }}
+  copy: src=secured/ssl/{{ DOMAIN }}/{{ DOMAIN }}.{{ item }} dest=/home/letsencrypt/ssl/{{ DOMAIN }}/{{ DOMAIN }}.{{ item }} owner=letsencrypt group=letsencrypt mode="u+rx,g-rw,o-rwx"
+  with_items:
+    - key
+    - csr
+
+- name: Créer le certificat
+  raw: su -c "/bin/bash /home/letsencrypt/le-cron.sh" letsencrypt

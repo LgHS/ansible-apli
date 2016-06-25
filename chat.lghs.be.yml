@@ -1,0 +1,39 @@
+---
+# confgig commun de tout les hosts
+
+- hosts: richmond.lghs.space
+  vars:
+    ID: 6003
+    DOMAIN: chat.lghs.be
+
+    PROXY:
+      ssl:
+        - { domain: 'chat.lghs.be', redirect: '127.0.0.1:3000'}
+
+  pre_tasks:
+    - include_vars: secured/password.yml
+
+  roles:
+    #~ - role: 'user'
+    - role: 'nginx-proxy'
+    #~ - role: 'letsencrypt'
+
+  #~ tasks:
+
+    #~ - name: Extract Rocket.Chat
+      #~ unarchive: src=https://rocket.chat/releases/latest/download  dest=/var/www/chat.lghs.be copy=no
+
+    #~ - name: test droit Rocket.Chat
+      #~ file: path=/var/www/chat.lghs.be owner={{ DOMAIN | replace(".", "-") }} group={{ DOMAIN | replace(".", "-") }} recurse=yes
+
+    #~ - name: npm Rocket.Chat
+      #~ npm: path=/var/www/chat.lghs.be/bundle/programs/server/
+
+    #~ - name: Supervisor config
+      #~ template: src=files/chat.lghs.be/chat.lghs.be.conf.j2 dest=/etc/supervisor/conf.d/chat-lghs-be.conf owner=root group=root mode="u+rw,g+r,o+r"
+      #~ notify:
+        #~ - restart supervisor
+
+  #~ handlers:
+    #~ - name: restart Supervisor
+      #~ service: name=supervisor state=reloaded

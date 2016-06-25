@@ -1,0 +1,35 @@
+---
+# confgig commun de tout les hosts
+
+- hosts: all
+  vars:
+    ID: 6001
+    DOMAIN: lghs.be
+    NGINX_ROOT: /var/www/lghs.be/files
+    TECHNO: php
+
+  pre_tasks:
+    - include_vars: secured/password.yml
+
+  roles:
+    - { role: 'user', when: ansible_hostname == 'app' }
+    - { role: 'php', when: ansible_hostname == 'app' }
+    - { role: 'nginx', when: ansible_hostname == 'app' }
+    - { role: 'letsencrypt', when: ansible_hostname == 'moss' }
+
+  tasks:
+    - name: Téléchargement lghs.be
+      git: repo=https://github.com/LgHS/Site-Web-Front dest=/var/www/lghs.be clone=yes update=yes force=yes
+      when: ansible_hostname == 'app'
+
+    - name: test droit lghs.be
+      file: path=/var/www/lghs.be owner={{ DOMAIN | replace(".", "-") }} group={{ DOMAIN | replace(".", "-") }} recurse=yes
+      when: ansible_hostname == 'app'
+
+    - name: composer lghs.be
+      composer: command="install" working_dir="/var/www/lghs.be" prefer_dist="yes"
+      when: ansible_hostname == 'app'
+
+    - name: npm lghs.be
+      npm: path=/var/www/lghs.be
+      when: ansible_hostname == 'app'

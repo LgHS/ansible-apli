@@ -1,0 +1,26 @@
+#~ ---
+
+- name: Créer repertoire domain
+  file: path=/var/mail/vhosts/{{ item }} state=directory owner=vmail group=vmail mode="u+rwX,g+rwX,o+r" recurse=yes
+  with_items: "{{ DOMAIN }}"
+
+- name: Créer repertoire domain opendkim
+  file: path=/etc/opendkim/key/{{ item }} state=directory owner=root group=root mode="u+rwX,g+rwX,o+r" recurse=yes
+  with_items: "{{ DOMAIN }}"
+  notify:
+    - restart opendkim
+
+- name: copie repertoire domain opendkim
+  copy: src=secured/opendkim/{{ item }}/mail.private  dest=/etc/opendkim/key/{{ item }}/mail.private owner=root group=root mode="u+rw,g+r,o+r"
+  with_items: "{{ DOMAIN }}"
+  notify:
+    - restart opendkim
+
+- name: config opendkim domain
+  template: src={{ item }}.j2 dest=/etc/opendkim/{{ item }} owner=root group=dovecot mode="u+rw,g+r,o+r"
+  with_items:
+    - TrustedHosts
+    - KeyTable
+    - SigningTable
+  notify:
+    - restart opendkim

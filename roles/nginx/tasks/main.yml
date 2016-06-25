@@ -1,0 +1,12 @@
+---
+# confgig php
+
+- name: Copie des fichier de nginx
+  template: src=site.j2 dest=/etc/nginx/sites-available/{{ DOMAIN | replace(".", "-") }} owner=root group=root mode="u+rw,g+r,o+r"
+  notify:
+    - restart nginx
+
+- name: Lien symbolique vhost
+  file: src=/etc/nginx/sites-available/{{ DOMAIN | replace(".", "-") }} dest=/etc/nginx/sites-enabled/{{ DOMAIN | replace(".", "-") }} owner=root group=root state=link
+  notify:
+    - restart nginx

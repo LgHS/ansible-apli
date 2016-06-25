@@ -1,0 +1,92 @@
+global
+    ssl-default-bind-ciphers EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:+CAMELLIA256:+AES256:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!ECDSA:CAMELLIA256-SHA:AES256-SHA:CAMELLIA128-SHA:AES128-SHA
+    ssl-default-bind-options no-sslv3 no-tls-tickets #disable SSLv3
+    tune.ssl.default-dh-param 2048 #tune DH to 2048
+    log 127.0.0.1    local0 notice
+    user haproxy
+    group haproxy
+    maxconn 2048
+    stats socket /var/run/haproxy.sock mode 600 level admin
+    stats timeout 2m
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    option  nolinger
+    retries 3
+    option redispatch
+    timeout connect  5000
+    timeout client  10000
+    timeout server  10000
+
+frontend http-in
+    bind :80 v4v6
+    mode http
+    # Blacklist: Deny access to some IPs before anything else is checked
+    tcp-request content reject if { src -f /etc/haproxy/blacklist.lst }
+{% if REDIRECTS %}
+{% for redirect in REDIRECTS %}
+    redirect prefix http://{{ redirect['redirect'] }} code 301 if { hdr(host) -i {{ redirect['domain'] }}  }
+{% endfor %}
+{% endif %}
+{% if WEBSITES %}
+{% for website in WEBSITES %}
+    acl acl_web_{{ website['domain'] | replace(".", "_") }}  hdr(host)   {{ website['domain'] }}
+{% endfor %}
+{% endif %}
+{% if LES %}
+{% for le in LES %}
+    acl acl_le_{{ le['domain'] | replace(".", "_") }} path_beg /.well-known/acme-challenge/ AND hdr(host) {{ le['domain'] }}
+{% endfor %}
+{% endif %}
+{% if LES %}
+{% for le in LES %}
+    use_backend back_le_{{ le['domain'] | replace(".", "_") }} if acl_le_{{ le['domain'] | replace(".", "_") }}
+{% endfor %}
+{% endif %}
+{% if WEBSITES %}
+{% for website in WEBSITES %}
+    use_backend back_web_{{ website['domain'] | replace(".", "_") }} if acl_web_{{ website['domain'] | replace(".", "_") }}
+{% endfor %}
+{% endif %}
+
+frontend https-in
+    bind :443 v4v6 ssl crt /home/letsencrypt/bundles
+    mode http
+    # Blacklist: Deny access to some IPs before anything else is checked
+    tcp-request content reject if { src -f /etc/haproxy/blacklist.lst }
+{% if WEBSITES %}
+{% for website in WEBSITES %}
+    acl acl_web_{{ website['domain'] | replace(".", "_") }}  hdr(host)   {{ website['domain'] }}
+{% endfor %}
+{% endif %}
+{% if WEBSITES %}
+{% for website in WEBSITES %}
+    use_backend back_web_{{ website['domain'] | replace(".", "_") }} if acl_web_{{ website['domain'] | replace(".", "_") }}
+{% endfor %}
+{% endif %}
+
+{% if LES %}
+{% for le in LES %}
+backend back_le_{{ le['domain'] | replace(".", "_") }}
+    mode http
+    reqirep ^([^\ :]*)\ /.well-known/acme-challenge/(.*)     \1\ /\2
+    server server {{ le['srv'] }}:8080  check
+{% endfor %}
+{% endif %}
+
+{% if WEBSITES %}
+{% for website in WEBSITES %}
+backend back_web_{{ website['domain'] | replace(".", "_") }}
+    {% if website['ssl'] %}redirect scheme https code 301 if !{ ssl_fc }{% endif %}
+
+    mode http
+    server server {{ website['srv'] }}  check
+    option forwardfor
+    timeout queue 5000
+    timeout server 86400000
+    timeout connect 5000
+{% endfor %}
+{% endif %}

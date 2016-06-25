@@ -1,0 +1,9 @@
+---
+
+- name: Création fichier de configuration nginx vhost
+  template: src=ssl.j2 dest=/etc/nginx/sites-available/{{ item['domain'] | replace(".", "_") }} owner=root group=root mode="u+rw,g+r,o+r"
+  with_items: "{{ PROXY.ssl }}"
+
+- name: Lien symbolique vhost
+  file: src=/etc/nginx/sites-available/{{ item['domain'] | replace(".", "_") }} dest=/etc/nginx/sites-enabled/{{ item['domain'] | replace(".", "_") }} owner=root group=root state=link
+  with_items: "{{ PROXY.ssl }}"
