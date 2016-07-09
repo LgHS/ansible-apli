@@ -22,14 +22,14 @@
       git: repo=https://github.com/LgHS/Site-Web-Front dest=/var/www/lghs.be clone=yes update=yes force=yes
       when: ansible_hostname == 'app'
 
-    - name: test droit lghs.be
-      file: path=/var/www/lghs.be owner={{ DOMAIN | replace(".", "-") }} group={{ DOMAIN | replace(".", "-") }} recurse=yes
-      when: ansible_hostname == 'app'
-
     - name: composer lghs.be
       composer: command="install" working_dir="/var/www/lghs.be" prefer_dist="yes"
       when: ansible_hostname == 'app'
 
     - name: npm lghs.be
       npm: path=/var/www/lghs.be
+      when: ansible_hostname == 'app'
+
+    - name: test droit lghs.be
+      file: path=/var/www/lghs.be owner={{ DOMAIN | replace(".", "-") }} group={{ DOMAIN | replace(".", "-") }} recurse=yes
       when: ansible_hostname == 'app'
